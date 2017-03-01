@@ -17,7 +17,7 @@ aws.config.update({
   region: 'ap-southeast-2',
 });
 
-aws.config.loadFromPath('../credentials/aws.json');
+aws.config.loadFromPath('./credentials/aws.json');
 
 
 let dynamo = new aws.DynamoDB();
@@ -55,7 +55,9 @@ let backupTable = function(tablename, lts, callback) {
   }).on('httpUploadProgress', function(evt) {
     console.log(evt);
   }).send(function(err, data) {
-    console.log(err, data); callback();
+    if (err) {
+      console.log(err);
+    }
   });
 
   let onScan = function(err, data) {

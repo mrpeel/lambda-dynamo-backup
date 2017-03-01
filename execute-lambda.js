@@ -1,11 +1,13 @@
 'use strict';
 
-let aws = require('aws-sdk');
+const aws = require('aws-sdk');
+
+aws.config.loadFromPath('./credentials/aws.json');
+
+const dynamo = new aws.DynamoDB();
 const lambda = new aws.Lambda({
   region: 'ap-southeast-2',
 });
-
-aws.config.loadFromPath('../credentials/aws.json');
 
 let invokeLambda = function(lambdaName, event) {
   lambda.invoke({
@@ -14,31 +16,25 @@ let invokeLambda = function(lambdaName, event) {
     Payload: JSON.stringify(event, null, 2),
   }, function(err, data) {
     if (err) {
-      console.log(err); // an error occurred
+      console.log(err);
     } else {
-      console.log(`Function ${lambdaName} executed.`);
+      console.log(`Function ${lambdaName} executed with event: `,
+        `${JSON.stringify(event)}`);
     }
   });
 };
 
 let backupAll = function() {
-  lts = lts || false;
-
   dynamo.listTables({}, function(err, data) {
     if (err) console.log(err, err.stack); // an error occurred
     else {
-      async.each(data.TableNames, function(table, callback) {
+      data.TableNames.forEach((table) => {
         console.log('Backing up ' + table);
         invokeLambda('backupDynamo', {
           table: table,
         });
-      }, function(err) {
-        if (err) {
-          console.log('A table failed to process');
-        } else {
-          console.log('All tables have been processed successfully');
-        }
       });
+      console.log('All table backups have been invoked successfully');
     }
   });
 };
