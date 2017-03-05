@@ -1,6 +1,10 @@
+'use strict';
+
 const aws = require('aws-sdk');
 
-aws.config.loadFromPath('./credentials/aws.json');
+aws.config.update({
+  region: 'ap-southeast-2',
+});
 
 const sns = new aws.SNS();
 
