@@ -2,10 +2,13 @@
 
 let aws = require('aws-sdk');
 let ReadableStream = require('./readable-stream');
+let sns = require('./publish-sns');
 let zlib = require('zlib');
 let async = require('async');
 
 const moment = require('moment-timezone');
+
+const snsArn = 'arn:aws:sns:ap-southeast-2:815588223950:lambda-activity';
 
 let ts = moment().tz('Australia/Sydney').format('YYYYMMDD');
 
@@ -23,6 +26,9 @@ let backupHandler = function(event, context) {
   let lts = event.lts || false;
   if (!event.table) {
     console.error('backupTable missing context.table');
+    sns.publishMsg(snsArn,
+      'backupTable missing context.table',
+      'Lambda backupTable error');
     context.fail('backupTable missing context.table');
   }
 
@@ -59,6 +65,9 @@ let backupHandler = function(event, context) {
   }).send(function(err, data) {
     if (err) {
       console.error(err);
+      sns.publishMsg(snsArn,
+        err,
+        `Lambda backupTable ${tableName} failed`);
       context.fail(err);
     } else {
       context.succeed();
@@ -81,6 +90,10 @@ let backupHandler = function(event, context) {
         let md2 = moment();
         let seconds = Math.abs(md1.diff(md2, 'seconds'));
         console.log(`Backup ${tableName} took ${seconds} seconds.`);
+        sns.publishMsg(snsArn,
+          `Backup ${tableName} took ${seconds} seconds.`,
+          `Lambda backupTable ${tableName} succeeded`);
+
       }
     }
   };
