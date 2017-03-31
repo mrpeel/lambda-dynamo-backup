@@ -11,7 +11,7 @@ const snsArn = 'arn:aws:sns:ap-southeast-2:815588223950:lambda-activity';
 const lambda = new aws.Lambda({
   region: 'ap-southeast-2',
 });
-const maxRecordsPerInvocation = 200000;
+const maxRecordsPerInvocation = 150000;
 
 let ts = moment().tz('Australia/Sydney').format('YYYYMMDD');
 
