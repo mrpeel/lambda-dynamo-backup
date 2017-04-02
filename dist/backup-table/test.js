@@ -9,8 +9,10 @@ let context = {
   fail: function(msg) {
     console.log('context.fail(', msg || '', ')');
   },
-}
+};
 
 backupTable.backupHandler({
-  table: 'companies'
+  table: 'companyQuotes',
+  fileIncrement: 1,
+  partialUpdate: true,
 }, context);

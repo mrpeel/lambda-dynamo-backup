@@ -9,6 +9,6 @@ let context = {
   fail: function(msg) {
     console.log('context.fail(', msg || '', ')');
   },
-}
+};
 
-backupTable.executeBackupsHandler({}, context);
+executeBackups.executeBackupsHandler({}, context);

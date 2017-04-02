@@ -11,7 +11,7 @@ const snsArn = 'arn:aws:sns:ap-southeast-2:815588223950:lambda-activity';
 const lambda = new aws.Lambda({
   region: 'ap-southeast-2',
 });
-const maxRecordsPerInvocation = 150000;
+// const maxRecordsPerInvocation = 100000;
 
 let ts = moment().tz('Australia/Sydney').format('YYYYMMDD');
 
@@ -27,10 +27,15 @@ let backupHandler = asyncify(function(event, context) {
   let md1 = moment();
   let dataStream = new ReadableStream();
   let gzip = zlib.createGzip();
-  let backupCount = 0;
+  // let backupCount = 0;
+  let fileIncrement = 1;
   let fileName = '';
   let invokeAgain = false;
   let eventDetails = {};
+
+  if (event.fileIncrement) {
+    fileIncrement = event.fileIncrement + 1;
+  }
 
   let lts = event.lts || false;
   if (!event.table) {
@@ -56,6 +61,7 @@ let backupHandler = asyncify(function(event, context) {
 
   // body will contain the compressed content to ship to s3
   let body = dataStream.pipe(gzip);
+  // let body = dataStream;
   let bucket;
 
   if (lts) {
@@ -64,7 +70,12 @@ let backupHandler = asyncify(function(event, context) {
     bucket = 'sharecast-backup';
   }
 
-  fileName = tableName + '/' + tableName + '-' + ts + '.gz';
+  fileName = tableName + '/' + tableName + '-' + ts + '-' +
+    fileIncrement + '.gz';
+
+  // fileName = tableName + '/' + tableName + '-' + ts + '.gz';
+    // fileName = tableName + '/' + tableName + '-' + ts;
+
 
   let s3obj = new aws.S3({
     params: {
@@ -98,30 +109,44 @@ let backupHandler = asyncify(function(event, context) {
       for (let idx = 0; idx < data.Items.length; idx++) {
         dataStream.append(JSON.stringify(data.Items[idx]));
         dataStream.append('\n');
-        backupCount++;
+      // backupCount++;
       }
+      let md2 = moment();
+      let seconds = Math.abs(md1.diff(md2, 'seconds'));
 
       if (typeof data.LastEvaluatedKey !== 'undefined' &&
-        backupCount >= maxRecordsPerInvocation) {
+        seconds >= 250) {
+        // backupCount >= maxRecordsPerInvocation) {
         // Reached max records, need to reinvoke with params
         eventDetails.table = tableName;
         eventDetails.exclusiveStartKey = data.LastEvaluatedKey;
         eventDetails.partialUpdate = true;
+        eventDetails.fileIncrement = fileIncrement;
         invokeAgain = true;
 
-        let md2 = moment();
-        let seconds = Math.abs(md1.diff(md2, 'seconds'));
 
-        console.log(`Reached maximum records (${maxRecordsPerInvocation}) for`,
+        /* console.log(`Reached maximum records (${maxRecordsPerInvocation}) for`,
+          ` backup.  Partial backup of ${tableName} took ${seconds} seconds.  `,
+          `Reinvoking at: ${JSON.stringify(eventDetails.exclusiveStartKey)}`); */
+
+        console.log(`Reached maximum execution time for`,
           ` backup.  Partial backup of ${tableName} took ${seconds} seconds.  `,
           `Reinvoking at: ${JSON.stringify(eventDetails.exclusiveStartKey)}`);
 
         dataStream.end();
 
         try {
-          awaitify(
+          /* awaitify(
             sns.publishMsg(snsArn,
               `Reached maximum records for backup.  ` +
+              `Partial backup of ${tableName} took ${seconds} seconds.  ` +
+              `Reinvoking at: ` +
+              `${JSON.stringify(eventDetails.exclusiveStartKey)}`,
+              `Lambda backupTable ${tableName} partially completed`)); */
+
+          awaitify(
+            sns.publishMsg(snsArn,
+              `Reached maximum time for backup.  ` +
               `Partial backup of ${tableName} took ${seconds} seconds.  ` +
               `Reinvoking at: ` +
               `${JSON.stringify(eventDetails.exclusiveStartKey)}`,
@@ -133,8 +158,6 @@ let backupHandler = asyncify(function(event, context) {
         dynamo.scan(params, onScan);
       } else {
         dataStream.end();
-        let md2 = moment();
-        let seconds = Math.abs(md1.diff(md2, 'seconds'));
         console.log(`Backup ${tableName} took ${seconds} seconds.`);
         try {
           awaitify(
@@ -142,7 +165,6 @@ let backupHandler = asyncify(function(event, context) {
               `Backup ${tableName} took ${seconds} seconds.`,
               `Lambda backupTable ${tableName} succeeded`));
         } catch (err) {}
-
       }
     }
   };
@@ -152,10 +174,12 @@ let backupHandler = asyncify(function(event, context) {
     let table = awaitify(describeTable(tableName));
 
     if (event.partialUpdate) {
-      let existingData = awaitify(retrievePartialBackup(bucket, fileName));
-      dataStream.append(existingData);
+      console.log(`Continuing backup of ${tableName}, part ${fileIncrement}`);
+    // let existingData = awaitify(retrievePartialBackup(bucket, fileName));
+    // dataStream.append(existingData);
     } else {
       // Starting a backup, so write table metadata to first line
+      console.log(`Starting backup of ${tableName}`);
       dataStream.append(JSON.stringify(table));
       dataStream.append('\n');
     }
@@ -167,6 +191,8 @@ let backupHandler = asyncify(function(event, context) {
       // Continuing a backup, so set-up key param
       params.ExclusiveStartKey = event.exclusiveStartKey;
     }
+
+    console.log(`Ready to start table scan for ${tableName}`);
 
     // start streaming table data
     dynamo.scan(params, onScan);
@@ -181,13 +207,13 @@ let backupHandler = asyncify(function(event, context) {
   }
 });
 
-let retrievePartialBackup = function(bucket, fileName) {
+/* let retrievePartialBackup = function(bucket, fileName) {
   return new Promise(function(resolve, reject) {
     let s3obj = new aws.S3();
 
     s3obj.getObject({
       Bucket: bucket,
-      Key: fileName
+      Key: fileName,
     }, (err, data) => {
       // Handle any error and exit
       if (err) {
@@ -202,16 +228,12 @@ let retrievePartialBackup = function(bucket, fileName) {
       });
     });
   });
-};
+}; */
 
 let finishedUpload = asyncify(function(context, invokeAgain, event) {
   // Check whether further processing is required to finish backup
   if (invokeAgain) {
     awaitify(invokeLambda('backupDynamo', event));
-  /*awaitify(new Promise(function(resolve, reject) {
-    backupHandler(event, context);
-    resolve(true);
-  }));*/
   }
 
   context.succeed();

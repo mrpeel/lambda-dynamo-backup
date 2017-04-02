@@ -10,7 +10,6 @@ const sns = new aws.SNS();
 
 let publishMsg = function(topicArn, message, subject) {
   return new Promise(function(resolve, reject) {
-
     let params = {
       TopicArn: topicArn,
       Message: message,
@@ -26,12 +25,11 @@ let publishMsg = function(topicArn, message, subject) {
       } else {
         // console.log('Sent message: ', data.MessageId);
         resolve(data.MessageId);
-
       }
     });
   });
 };
 
 module.exports = {
-  publishMsg: publishMsg
+  publishMsg: publishMsg,
 };

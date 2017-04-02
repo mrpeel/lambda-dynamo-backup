@@ -1,0 +1,22 @@
+{
+    "env": {
+        "node": true
+    },
+    "parserOptions": {
+        "ecmaVersion": 7
+      },
+    "extends": "eslint-config-google",
+    "rules": {
+        "no-undef": 1,
+        "max-len": [2, {
+            "code": 120,
+            "tabWidth": 2,
+            "ignoreUrls": true,
+            "ignoreComments": true,
+            "ignoreStrings": true
+          }],
+    },
+    "globals": {
+        "Promise": true
+    },
+}
