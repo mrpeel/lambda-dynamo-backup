@@ -71,7 +71,7 @@ let backupHandler = asyncify(function(event, context) {
   }
 
   fileName = tableName + '/' + tableName + '-' + ts + '-' +
-    fileIncrement + '.gz';
+    ('000' + fileIncrement).slice(-3) + '.gz';
 
   // fileName = tableName + '/' + tableName + '-' + ts + '.gz';
     // fileName = tableName + '/' + tableName + '-' + ts;
