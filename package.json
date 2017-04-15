@@ -11,10 +11,12 @@
   "devDependencies": {
     "eslint": "^3.11.1",
     "eslint-config-google": "^0.7.1",
+    "fast-csv": "^2.4.0",
     "gulp": "^3.9.1",
     "gulp-aws-lambda": "^1.0.11",
     "gulp-install": "^0.6.0",
-    "gulp-zip": "^4.0.0"
+    "gulp-zip": "^4.0.0",
+    "s3-stream-upload": "^2.0.1"
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
