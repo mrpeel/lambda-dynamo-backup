@@ -16,9 +16,14 @@ aws.config.update({
 });
 
 
-let dynamodb = new aws.DynamoDB({
+const dynamodb = new aws.DynamoDB({
   maxRetries: 20,
 });
+
+const client = new aws.DynamoDB.DocumentClient({
+  maxRetries: 20,
+});
+
 
 let s3 = new aws.S3();
 // Total row count
@@ -28,7 +33,8 @@ let rowCount = 0;
 let writeItemWithoutHeaders = function(stream, item) {
   let row = {};
   Object.keys(item).forEach((key) => {
-    row[key] = item[key].S || item[key].N || item[key].BOOL;
+    // row[key] = item[key].S || item[key].N || item[key].BOOL;
+    row[key] = item[key];
   });
 
   return stream.write(row);
@@ -40,7 +46,8 @@ let writeItemWithHeaders = function(stream, item, columns) {
   let row = {};
   columns.forEach((column) => {
     if (item[column]) {
-      row[column] = item[column].S || item[column].N || item[column].BOOL;
+      // row[column] = item[column].S || item[column].N || item[column].BOOL;
+      row[column] = item[column];
     } else {
       row[column] = '';
     }
@@ -60,8 +67,9 @@ let writeTableToCsv = asyncify(function(options, context) {
     TableName: options.table,
   };
 
-  if (options.filterExpression) {
+  if (options.filterExpression && options.expressionAttributeValues) {
     params.FilterExpression = options.filterExpression;
+    params.ExpressionAttributeValues = options.expressionAttributeValues;
   }
 
   if (!options.filesize) {
@@ -72,11 +80,10 @@ let writeTableToCsv = asyncify(function(options, context) {
   let csvStream;
   let backoff = 1;
   // Count of files used to increment number in filename for each file
-  let fileCount = 0;
+  let fileCount;
   let fileName;
   let fileRowCount = 0;
   let writableStream;
-
 
   let setupFileStream = function() {
     // Form the filename with the table name as the subdirectory and the base of the filename
@@ -106,7 +113,7 @@ let writeTableToCsv = asyncify(function(options, context) {
       });
       console.log('Starting new file: s3://' + options.s3Bucket + '/' + filePath);
     } else {
-      writableStream = fs.createWriteStream(options.table + '/' + fileName);
+      writableStream = fs.createWriteStream('./' + options.table + '/' + fileName);
       console.log('Starting new file: ' + fileName);
     }
 
@@ -117,12 +124,28 @@ let writeTableToCsv = asyncify(function(options, context) {
       csvStream.pipe(writableStream);
     }
 
+    // Wait for the stream to emit finish before we return
+    // When gzipped this can take a bit
+    writableStream.on('finish', function() {
+      console.log('Finished file: ' + fileName);
+    });
+
+
     fileRowCount = 0;
   };
 
+  let drainMemory = function(csvStreamToDrain) {
+    return new Promise(function(resolve, reject) {
+      csvStreamToDrain.once('drain', function() {
+        resolve(true);
+      });
+    });
+  };
+
   // Repeatedly scan dynamodb until there are no more rows
-  let onScan = function(err, data) {
-    let noDrainRequired = false;
+  let onScan = asyncify(function(err, data) {
+    let drainRequired = false;
+    let finishedScan = false;
     if (err) {
       // Check for throughput exceeded
       if (err.code && err.code == 'ProvisionedThroughputExceededException') {
@@ -137,47 +160,50 @@ let writeTableToCsv = asyncify(function(options, context) {
       }
     } else if (typeof data.LastEvaluatedKey !== 'undefined') {
       params.ExclusiveStartKey = data.LastEvaluatedKey;
-      // Reset backoff
-      backoff = 1;
-
-      data.Items.forEach((item) => {
-        if (fileRowCount === 0) {
-          noDrainRequired = writeItemWithHeaders(csvStream, item, options.columns);
-        } else {
-          noDrainRequired = writeItemWithoutHeaders(csvStream, item);
-        }
-
-        fileRowCount++;
-        rowCount++;
-
-        console.log('Row: ' + rowCount + ', Mb: ' + (writableStream.bytesWritten / 1024 / 1024).toFixed(2));
-
-        // Keep going if there is more data and we haven't exceeded the file size
-        if (writableStream.bytesWritten >= 1024 * 1024 * options.filesize) {
-          // End current file and set-up a new file
-          csvStream.end();
-          fileCount++;
-          setupFileStream();
-          dynamodb.scan(params, onScan);
-        } else if (!noDrainRequired) {
-          // Check if we need to drain to avoid bloating memory
-          csvStream.once('drain', function() {
-            dynamodb.scan(params, onScan);
-          });
-        } else {
-          dynamodb.scan(params, onScan);
-        }
-      });
     } else {
-      csvStream.end();
+      finishedScan = true;
     }
-  };
+    // Reset backoff
+    backoff = 1;
 
-  // Wait for the stream to emit finish before we return
-  // When gzipped this can take a bit
-  writableStream.on('finish', function() {
-    console.log('Finished file: ' + fileName);
+    data.Items.forEach((item) => {
+      if (fileRowCount === 0) {
+        drainRequired = !writeItemWithHeaders(csvStream, item, options.columns);
+      } else {
+        drainRequired = !writeItemWithoutHeaders(csvStream, item);
+      }
+
+      fileRowCount++;
+      rowCount++;
+
+      console.log('Row: ' + rowCount + ', Mb: ' + (writableStream.bytesWritten / 1024 / 1024).toFixed(2));
+    });
+
+    // Keep going if there is more data and we haven't exceeded the file size
+    if (finishedScan) {
+      // Last record so end csv stream
+      csvStream.end();
+    } else {
+      // Up to max file size so end and start new file
+      if (writableStream.bytesWritten >= 1024 * 1024 * options.filesize) {
+        // End current file and set-up a new file
+        csvStream.end();
+        fileCount++;
+        setupFileStream();
+      } else if (drainRequired) {
+        // Drain to avoid bloating memory
+        awaitify(drainMemory(csvStream));
+      }
+
+      // Continue with scan
+      client.scan(params, onScan);
+    }
   });
+
+  // Set-up file and start first scan
+  fileCount = 1;
+  setupFileStream();
+  client.scan(params, onScan);
 });
 
 let sleep = function(ms) {
@@ -190,4 +216,4 @@ let sleep = function(ms) {
 };
 
 
-module.exports = writeTableToCsv;
+module.exports.writeTableToCsv = writeTableToCsv;

@@ -45,6 +45,7 @@ Temporary Items
 # Data files
 # =========================
 data
+lambda/export-csv/companyQuotes
 
 # User name and password
 # =========================

@@ -11,38 +11,51 @@ let context = {
   },
 };
 
-let columns = ['12WeekBollingerBandLower', '12WeekBollingerBandUpper', '12WeekBollingerPrediction', '12WeekBollingerType',
-  '12WeekVolatility', '1WeekFutureDividend', '1WeekFuturePrice', '1WeekFutureReturn', '1WeekFutureRiskAdjustedReturn',
-  '1WeekVolatility', '26WeekVolatility', '2WeekFutureDividend', '2WeekFuturePrice', '2WeekFutureReturn',
-  '2WeekFutureRiskAdjustedReturn', '2WeekVolatility', '4WeekBollingerBandLower', '4WeekBollingerBandUpper',
-  '4WeekBollingerPrediction', '4WeekBollingerType', '4WeekVolatility', '52WeekHigh', '52WeekLow', '52WeekVolatility',
-  '640106_A3597525W', '8WeekVolatility', 'AINTCOV', 'AverageVolume', 'Beta', 'BookValuePerShareYear',
-  'CashPerShareYear', 'DPSRecentYear', 'DividendPerShare', 'DividendRecentQuarter', 'DividendYield',
+let columns = ['symbol', 'quoteDate', 'lastTradePriceOnly', 'adjustedPrice', 'volume', 'daysHigh', 'daysLow',
+  'previousClose', 'change', 'changeInPercent', '52WeekHigh', '52WeekLow',
+  'changeFrom52WeekHigh', 'changeFrom52WeekLow', 'percebtChangeFrom52WeekHigh', 'percentChangeFrom52WeekLow',
+  'Price200DayAverage', 'Price52WeekPercChange',
+  '1WeekVolatility', '2WeekVolatility', '4WeekVolatility', '8WeekVolatility', '12WeekVolatility', '26WeekVolatility',
+  '52WeekVolatility',
+  '4WeekBollingerBandLower', '4WeekBollingerBandUpper', '4WeekBollingerPrediction', '4WeekBollingerType',
+  '12WeekBollingerBandLower', '12WeekBollingerBandUpper', '12WeekBollingerPrediction', '12WeekBollingerType',
+  'allordpreviousclose', 'allordchange', 'allorddayshigh', 'allorddayslow',
+  'allordpercebtChangeFrom52WeekHigh', 'allordpercentChangeFrom52WeekLow',
+  'asxpreviousclose', 'asxchange', 'asxdayshigh', 'asxdayslow', 'asxpercebtChangeFrom52WeekHigh',
+  'asxpercentChangeFrom52WeekLow', 'exDividendDate', 'exDividendPayout',
+  '640106_A3597525W', 'AINTCOV', 'AverageVolume', 'Beta', 'BookValuePerShareYear', 'CashPerShareYear', 'DPSRecentYear',
   'EBITDMargin', 'EPS', 'EPSGrowthRate10Years', 'EPSGrowthRate5Years', 'FIRMMCRT', 'FXRUSD', 'Float',
-  'Future12WeekDividend', 'Future12WeekPrice', 'Future12WeekReturn', 'Future12WeekRiskAdjustedReturn',
-  'Future1WeekDividend', 'Future1WeekPrice', 'Future1WeekReturn', 'Future1WeekRiskAdjustedReturn', 'Future26WeekDividend',
-  'Future26WeekPrice', 'Future26WeekReturn', 'Future26WeekRiskAdjustedReturn', 'Future2WeekDividend', 'Future2WeekPrice',
-  'Future2WeekReturn', 'Future2WeekRiskAdjustedReturn', 'Future4WeekDividend', 'Future4WeekPrice', 'Future4WeekReturn',
-  'Future4WeekRiskAdjustedReturn', 'Future52WeekDividend', 'Future52WeekPrice', 'Future52WeekReturn',
-  'Future52WeekRiskAdjustedReturn', 'Future8WeekDividend', 'Future8WeekPrice', 'Future8WeekReturn',
-  'Future8WeekRiskAdjustedReturn', 'GRCPAIAD', 'GRCPAISAD', 'GRCPBCAD', 'GRCPBCSAD', 'GRCPBMAD', 'GRCPNRAD', 'GRCPRCAD',
+  'GRCPAIAD', 'GRCPAISAD', 'GRCPBCAD', 'GRCPBCSAD', 'GRCPBMAD', 'GRCPNRAD', 'GRCPRCAD',
   'H01_GGDPCVGDP', 'H01_GGDPCVGDPFY', 'H05_GLFSEPTPOP', 'IAD', 'LTDebtToEquityQuarter', 'LTDebtToEquityYear', 'MarketCap',
-  'NetIncomeGrowthRate5Years', 'NetProfitMarginPercent', 'OperatingMargin', 'PE', 'Price200DayAverage', 'Price52WeekPercChange',
+  'NetIncomeGrowthRate5Years', 'NetProfitMarginPercent', 'OperatingMargin', 'PE',
   'PriceToBook', 'QuoteLast', 'ReturnOnAssets5Years', 'ReturnOnAssetsTTM', 'ReturnOnAssetsYear', 'ReturnOnEquity5Years',
   'ReturnOnEquityTTM', 'ReturnOnEquityYear', 'RevenueGrowthRate10Years', 'RevenueGrowthRate5Years', 'TotalDebtToAssetsQuarter',
-  'TotalDebtToAssetsYear', 'TotalDebtToEquityQuarter', 'TotalDebtToEquityYear', 'Volume', 'adjustedPrice', 'allordchange',
-  'allorddayshigh', 'allorddayslow', 'allordpercebtChangeFrom52WeekHigh', 'allordpercentChangeFrom52WeekLow',
-  'allordpreviousclose', 'asxchange', 'asxdayshigh', 'asxdayslow', 'asxpercebtChangeFrom52WeekHigh',
-  'asxpercentChangeFrom52WeekLow', 'asxpreviousclose', 'bookValue', 'change', 'changeFrom52WeekHigh',
-  'changeFrom52WeekLow', 'changeInPercent', 'created', 'daysHigh', 'daysLow', 'dividendPerShare', 'dividendYield',
-  'earningsPerShare', 'ebitda', 'epsEstimateCurrentYear', 'exDividendDate', 'exDividendPayout', 'lastTradePriceOnly',
-  'marketCapitalization', 'name', 'peRatio', 'pegRatio', 'percebtChangeFrom52WeekHigh', 'percentChangeFrom52WeekLow',
-  'previousClose', 'pricePerBook', 'pricePerEpsEstimateCurrentYear', 'pricePerEpsEstimateNextYear', 'pricePerSales',
-  'quoteDate', 'shortRatio', 'stockExchange', 'symbol', 'volume'];
-let filterExpression = 'symbol = \'ANZ\' and quoteDate BETWEEN \'2016-01-01\' AND 2016-12-31';
+  'TotalDebtToAssetsYear', 'TotalDebtToEquityQuarter', 'TotalDebtToEquityYear', 'bookValue',
+  'earningsPerShare', 'ebitda', 'epsEstimateCurrentYear',
+  'marketCapitalization', 'peRatio', 'pegRatio', 'pricePerBook', 'pricePerEpsEstimateCurrentYear',
+  'pricePerEpsEstimateNextYear', 'pricePerSales',
+  'Future1WeekDividend', 'Future1WeekPrice', 'Future1WeekReturn', 'Future1WeekRiskAdjustedReturn',
+  'Future2WeekDividend', 'Future2WeekPrice', 'Future2WeekReturn', 'Future2WeekRiskAdjustedReturn',
+  'Future4WeekDividend', 'Future4WeekPrice', 'Future4WeekReturn', 'Future4WeekRiskAdjustedReturn',
+  'Future8WeekDividend', 'Future8WeekPrice', 'Future8WeekReturn', 'Future8WeekRiskAdjustedReturn',
+  'Future12WeekDividend', 'Future12WeekPrice', 'Future12WeekReturn', 'Future12WeekRiskAdjustedReturn',
+  'Future26WeekDividend', 'Future26WeekPrice', 'Future26WeekReturn', 'Future26WeekRiskAdjustedReturn',
+  'Future52WeekDividend', 'Future52WeekPrice', 'Future52WeekReturn', 'Future52WeekRiskAdjustedReturn'];
+
+let filterExpression = 'symbol BETWEEN :startSymbol AND :endSymbol ' +
+  'and quoteDate BETWEEN :startDate AND :endDate';
+let expressionAttributeValues = {
+  ':startSymbol': '1AD',
+  ':endSymbol': 'CXM',
+  ':startDate': '2016-01-01',
+  ':endDate': '2016-12-31',
+};
+
 
 exportTable.writeTableToCsv({
   table: 'companyQuotes',
   columns: columns,
+  compressed: true,
   filterExpression: filterExpression,
+  expressionAttributeValues: expressionAttributeValues,
 }, context);
