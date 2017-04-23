@@ -43,12 +43,14 @@ let columns = ['symbol', 'quoteDate', 'lastTradePriceOnly', 'adjustedPrice', 'vo
   'Future52WeekDividend', 'Future52WeekPrice', 'Future52WeekReturn', 'Future52WeekRiskAdjustedReturn'];
 
 let filterExpression = 'symbol BETWEEN :startSymbol AND :endSymbol ' +
-  'and quoteDate BETWEEN :startDate AND :endDate';
+  'and quoteDate BETWEEN :startDate AND :endDate ' +
+  'and volume >= :volumeMin';
 let expressionAttributeValues = {
   ':startSymbol': '1AD',
-  ':endSymbol': 'CXM',
-  ':startDate': '2016-01-01',
-  ':endDate': '2016-12-31',
+  ':endSymbol': 'CZL',
+  ':startDate': '2007-07-01',
+  ':endDate': '2017-02-03',
+  ':volumeMin': 1,
 };
 
 

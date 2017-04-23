@@ -176,7 +176,9 @@ let writeTableToCsv = asyncify(function(options, context) {
       fileRowCount++;
       rowCount++;
 
-      console.log('Row: ' + rowCount + ', Mb: ' + (writableStream.bytesWritten / 1024 / 1024).toFixed(2));
+      if (rowCount % 1000 === 0) {
+        console.log('Row: ' + rowCount + ', Mb: ' + (writableStream.bytesWritten / 1024 / 1024).toFixed(2));
+      }
     });
 
     // Keep going if there is more data and we haven't exceeded the file size
