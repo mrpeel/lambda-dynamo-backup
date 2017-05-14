@@ -1,15 +1,14 @@
 'use strict';
 
-const exportTable = require('./index');
+const aws = require('aws-sdk');
+const sns = require('../libs/publish-sns');
+const asyncify = require('asyncawait/async');
+const awaitify = require('asyncawait/await');
+const snsArn = 'arn:aws:sns:ap-southeast-2:815588223950:lambda-activity';
 
-let context = {
-  succeed: function(msg) {
-    console.log('context.succeed(', msg || '', ')');
-  },
-  fail: function(msg) {
-    console.log('context.fail(', msg || '', ')');
-  },
-};
+const lambda = new aws.Lambda({
+  region: 'ap-southeast-2',
+});
 
 let columns = ['symbol', 'quoteDate', 'lastTradePriceOnly', 'adjustedPrice', 'volume', 'daysHigh', 'daysLow',
   'previousClose', 'change', 'changeInPercent', '52WeekHigh', '52WeekLow',
@@ -44,34 +43,52 @@ let columns = ['symbol', 'quoteDate', 'lastTradePriceOnly', 'adjustedPrice', 'vo
 
 let filterExpression = 'quoteDate >= :startDate ' +
   'and volume >= :volumeMin';
+
 let expressionAttributeValues = {
   ':startDate': '2007-07-01',
   ':volumeMin': 1,
 };
 
+let invokeLambda = function(lambdaName, event) {
+  return new Promise(function(resolve, reject) {
+    lambda.invoke({
+      FunctionName: lambdaName,
+      InvocationType: 'Event',
+      Payload: JSON.stringify(event, null, 2),
+    }, function(err, data) {
+      if (err) {
+        reject(err);
+      } else {
+        console.log(`Function ${lambdaName} executed with event: `,
+          `${JSON.stringify(event)}`);
+        resolve(true);
+      }
+    });
+  });
+};
 
-/* exportTable.exportToCsv({
-  table: 'companyQuotes',
-  columns: columns,
-  filterExpression: filterExpression,
-  expressionAttributeValues: expressionAttributeValues,
-  s3Bucket: 'sharecast-exports',
-  s3Path: 'csv',
-}, context); */
+let executeExportHandler = asyncify(function(event, context) {
+  try {
+    awaitify(invokeLambda('exportCsv', {
+      table: 'companyQuotes',
+      columns: columns,
+      filterExpression: filterExpression,
+      expressionAttributeValues: expressionAttributeValues,
+      s3Bucket: 'sharecast-exports',
+      s3Path: 'csv',
+    }));
+    console.log('exportCsv successfully invoked');
+    context.succeed();
+  } catch (err) {
+    console.error(err, err.stack);
+    try {
+      awaitify(sns.publishMsg(snsArn,
+        err,
+        'Lambda executeExportHandler failed'));
+    } catch (err) {}
+    context.fail('executeExportHandler failed.  ', err);
+  }
+});
 
 
-// Run continuation for fileIncrement 2
-exportTable.exportToCsv({
-  table: 'companyQuotes',
-  columns: columns,
-  filterExpression: filterExpression,
-  expressionAttributeValues: expressionAttributeValues,
-  s3Bucket: 'sharecast-exports',
-  s3Path: 'csv',
-  exclusiveStartKey: {
-    'quoteDate': '2010-06-28',
-    'symbol': 'MST',
-  },
-  partialUpdate: true,
-  fileIncrement: 1,
-}, context);
+module.exports.executeExportHandler = executeExportHandler;

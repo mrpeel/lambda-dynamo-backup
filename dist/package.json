@@ -6,7 +6,8 @@
   "dependencies": {
     "asyncawait": "^1.0.6",
     "aws-sdk": "^2.2.23",
-    "moment-timezone": "^0.5.11"
+    "moment-timezone": "^0.5.11",
+    "fast-csv": "^2.4.0"
   },
   "devDependencies": {
     "eslint": "^3.11.1",

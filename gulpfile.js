@@ -37,6 +37,35 @@ const lambdaParams2 = {
   },
 };
 
+const lambdaParams3 = {
+  FunctionName: 'exportCsv',
+  Handler: 'export-csv/index.exportToCsvHandler',
+  Role: 'arn:aws:iam::815588223950:role/lambda_backp_dynamo_to_s3',
+  Runtime: 'nodejs4.3',
+  Description: 'Execute a csv export increment',
+  MemorySize: 1024,
+  Timeout: 300,
+  Publish: true,
+  Code: {
+    S3Bucket: 'cake-lambda-zips',
+    S3Key: 'export-csv.zip',
+  },
+};
+
+const lambdaParams4 = {
+  FunctionName: 'executeExportCsv',
+  Handler: 'execute-export/index.executeExportHandler',
+  Role: 'arn:aws:iam::815588223950:role/lambda_backp_dynamo_to_s3',
+  Runtime: 'nodejs4.3',
+  Description: 'Execute a csv export',
+  MemorySize: 1024,
+  Timeout: 300,
+  Publish: true,
+  Code: {
+    S3Bucket: 'cake-lambda-zips',
+    S3Key: 'trigger-export-csv.zip',
+  },
+};
 
 
 const awsCredentials = {
@@ -71,4 +100,14 @@ gulp.task('deploy', ['install_dependencies'], function() {
   gulp.src(['dist/**/*'])
     .pipe(zip('trigger-backup-dynamo.zip'))
     .pipe(awsLambda(awsCredentials, lambdaParams2));
+});
+
+gulp.task('deployCsv', ['install_dependencies'], function() {
+  gulp.src(['dist/**/*'])
+    .pipe(zip('export-csv.zip'))
+    .pipe(awsLambda(awsCredentials, lambdaParams3));
+
+  gulp.src(['dist/**/*'])
+    .pipe(zip('trigger-export-csv.zip'))
+    .pipe(awsLambda(awsCredentials, lambdaParams4));
 });
