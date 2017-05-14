@@ -115,7 +115,7 @@ let backupHandler = asyncify(function(event, context) {
       let seconds = Math.abs(md1.diff(md2, 'seconds'));
 
       if (typeof data.LastEvaluatedKey !== 'undefined' &&
-        seconds >= 250) {
+        seconds >= 280) {
         // backupCount >= maxRecordsPerInvocation) {
         // Reached max records, need to reinvoke with params
         eventDetails.table = tableName;
