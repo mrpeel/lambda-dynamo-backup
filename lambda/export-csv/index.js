@@ -228,7 +228,7 @@ let exportToCsvHandler = asyncify(function(event, context) {
     } else {
       // Reached max time for lambda so set-up to finish and re-invoke
       if (typeof data.LastEvaluatedKey !== 'undefined' &&
-        seconds >= 280) {
+        seconds >= 250) {
         eventDetails.table = tableName;
         eventDetails.exclusiveStartKey = data.LastEvaluatedKey;
         eventDetails.partialUpdate = true;
