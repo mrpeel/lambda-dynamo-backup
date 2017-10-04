@@ -13,7 +13,7 @@ const lambdaParams1 = {
   Role: 'arn:aws:iam::815588223950:role/lambda_backp_dynamo_to_s3',
   Runtime: 'nodejs4.3',
   Description: 'Backup a single dynamodb table',
-  MemorySize: 1024,
+  MemorySize: 512,
   Timeout: 300,
   Publish: true,
   Code: {
@@ -28,7 +28,7 @@ const lambdaParams2 = {
   Role: 'arn:aws:iam::815588223950:role/lambda_backp_dynamo_to_s3',
   Runtime: 'nodejs4.3',
   Description: 'Trigger all dynamo table backups',
-  MemorySize: 1024,
+  MemorySize: 128,
   Timeout: 300,
   Publish: true,
   Code: {
